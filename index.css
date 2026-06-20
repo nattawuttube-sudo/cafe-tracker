@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.font-display {
+  font-family: "Fraunces", serif;
+  font-optical-sizing: auto;
+}
+.font-sans {
+  font-family: "Inter", sans-serif;
+}
+.font-mono {
+  font-family: "JetBrains Mono", monospace;
+}
+
+html, body, #root {
+  height: 100%;
+}
