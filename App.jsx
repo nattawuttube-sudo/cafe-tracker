@@ -53,4 +53,23 @@ const STARTER_MENUS = [
   { name: "ลาเต้", variants: [{ label: "ร้อน", price: 45, cost: 18 }, { label: "เย็น", price: 50, cost: 20 }] },
   { name: "ชาไทย", variants: [{ label: "เล็ก", price: 35, cost: 14 }, { label: "ใหญ่", price: 45, cost: 18 }] },
   { name: "อเมริกาโน่", variants: [{ label: "เย็น", price: 40, cost: 12 }] },
+export default function App() {
+  const [tab, setTab] = useState("record");
+  const [loading, setLoading] = useState(true);
+  const [saveState, setSaveState] = useState("idle");
+  const [configError, setConfigError] = useState(false);
+
+  const [menus, setMenus] = useState([]);
+  const [sales, setSales] = useState({});
+  const [expenses, setExpenses] = useState({});
+
+  const [selectedDate, setSelectedDate] = useState(todayStr());
+
+  const reloadAll = useCallback(async () => {
+    try {
+      const [menuData, { sales: s, expenses: e }] = await Promise.all([
+        fetchMenusWithVariants(),
+        fetchAllSalesAndExpenses(),
+      
+
 ];
