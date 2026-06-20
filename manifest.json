@@ -1,0 +1,9 @@
+{
+  "name": "ร้านบันทึก - คำนวณต้นทุนกำไร",
+  "short_name": "ร้านบันทึก",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F7F1E8",
+  "theme_color": "#3D2B1F",
+  "icons": []
+}
