@@ -171,6 +171,10 @@ async function fetchAllSalesAndExpenses() {
     .from("expenses")
     .select("*");
   if (expErr) throw expErr;
+  const { data: samplesData, error: samplesErr } = await supabase
+    .from("samples")
+    .select("*");
+  if (samplesErr) throw samplesErr;
 
   const sales = {};
   (salesData || []).forEach((row) => {
@@ -200,7 +204,22 @@ async function fetchAllSalesAndExpenses() {
     });
   });
 
-  return { sales, expenses };
+  const samples = {};
+  (samplesData || []).forEach((row) => {
+    const d = row.sample_date;
+    if (!samples[d]) samples[d] = [];
+    samples[d].push({
+      id: row.id,
+      menuId: row.menu_id,
+      variantId: row.variant_id,
+      menuName: row.menu_name,
+      variantLabel: row.variant_label,
+      cost: Number(row.cost),
+      qty: row.qty,
+    });
+  });
+
+  return { sales, expenses, samples };
 }
 
 // ---------- main component ----------
@@ -214,12 +233,13 @@ export default function App() {
   const [menus, setMenus] = useState([]);
   const [sales, setSales] = useState({});
   const [expenses, setExpenses] = useState({});
+  const [samples, setSamples] = useState({});
 
   const [selectedDate, setSelectedDate] = useState(todayStr());
 
   const reloadAll = useCallback(async () => {
     try {
-      const [menuData, { sales: s, expenses: e }] = await Promise.all([
+      const [menuData, { sales: s, expenses: e, samples: sm }] = await Promise.all([
         fetchMenusWithVariants(),
         fetchAllSalesAndExpenses(),
       ]);
@@ -232,6 +252,7 @@ export default function App() {
       }
       setSales(s);
       setExpenses(e);
+      setSamples(sm);
     } catch (err) {
       console.error("load failed", err);
       setConfigError(true);
@@ -358,6 +379,75 @@ export default function App() {
     await supabase.from("expenses").delete().eq("id", id);
   };
 
+  const addSample = async (variantRef, qtyDelta) => {
+    const list = samples[selectedDate] ? [...samples[selectedDate]] : [];
+    const idx = list.findIndex(
+      (s) => s.menuId === variantRef.menuId && s.variantId === variantRef.variantId
+    );
+
+    flashSaved();
+
+    if (idx >= 0) {
+      const newQty = list[idx].qty + qtyDelta;
+      if (newQty <= 0) {
+        const lineId = list[idx].id;
+        list.splice(idx, 1);
+        setSamples({ ...samples, [selectedDate]: list });
+        await supabase.from("samples").delete().eq("id", lineId);
+      } else {
+        list[idx] = { ...list[idx], qty: newQty };
+        setSamples({ ...samples, [selectedDate]: list });
+        await supabase
+          .from("samples")
+          .update({ qty: newQty })
+          .eq("id", list[idx].id);
+      }
+    } else if (qtyDelta > 0) {
+      const tempId = uid();
+      const newLine = {
+        id: tempId,
+        menuId: variantRef.menuId,
+        variantId: variantRef.variantId,
+        menuName: variantRef.menuName,
+        variantLabel: variantRef.variantLabel,
+        cost: variantRef.cost,
+        qty: qtyDelta,
+      };
+      list.push(newLine);
+      setSamples({ ...samples, [selectedDate]: list });
+
+      const { data, error } = await supabase
+        .from("samples")
+        .insert({
+          sample_date: selectedDate,
+          menu_id: variantRef.menuId,
+          variant_id: variantRef.variantId,
+          menu_name: variantRef.menuName,
+          variant_label: variantRef.variantLabel,
+          cost: variantRef.cost,
+          qty: qtyDelta,
+        })
+        .select()
+        .single();
+
+      if (!error && data) {
+        setSamples((prev) => {
+          const updatedList = (prev[selectedDate] || []).map((l) =>
+            l.id === tempId ? { ...l, id: data.id } : l
+          );
+          return { ...prev, [selectedDate]: updatedList };
+        });
+      }
+    }
+  };
+
+  const removeSampleLine = async (lineId) => {
+    const list = (samples[selectedDate] || []).filter((s) => s.id !== lineId);
+    setSamples({ ...samples, [selectedDate]: list });
+    flashSaved();
+    await supabase.from("samples").delete().eq("id", lineId);
+  };
+
   const saveMenus = async (nextMenus, action, payload) => {
     flashSaved();
     if (action === "delete") {
@@ -409,12 +499,15 @@ export default function App() {
 
   const dayLines = sales[selectedDate] || [];
   const dayExpenseLines = expenses[selectedDate] || [];
+  const daySampleLines = samples[selectedDate] || [];
 
   const dayRevenue = dayLines.reduce((sum, l) => sum + l.price * l.qty, 0);
   const dayCOGS = dayLines.reduce((sum, l) => sum + l.cost * l.qty, 0);
   const dayExpenseTotal = dayExpenseLines.reduce((s, e) => s + e.amount, 0);
-  const dayProfit = dayRevenue - dayCOGS - dayExpenseTotal;
+  const daySampleCost = daySampleLines.reduce((s, l) => s + l.cost * l.qty, 0);
+  const dayProfit = dayRevenue - dayCOGS - dayExpenseTotal - daySampleCost;
   const dayCupsSold = dayLines.reduce((sum, l) => sum + l.qty, 0);
+  const daySampleCups = daySampleLines.reduce((sum, l) => sum + l.qty, 0);
 
   if (configError) {
     return (
@@ -453,20 +546,25 @@ export default function App() {
             setSelectedDate={setSelectedDate}
             dayLines={dayLines}
             dayExpenseLines={dayExpenseLines}
+            daySampleLines={daySampleLines}
             dayRevenue={dayRevenue}
             dayCOGS={dayCOGS}
             dayExpenseTotal={dayExpenseTotal}
+            daySampleCost={daySampleCost}
             dayProfit={dayProfit}
             dayCupsSold={dayCupsSold}
+            daySampleCups={daySampleCups}
             onAddSale={addSale}
             onRemoveSaleLine={removeSaleLine}
             onAddExpense={addExpense}
             onRemoveExpense={removeExpense}
+            onAddSample={addSample}
+            onRemoveSampleLine={removeSampleLine}
           />
         )}
         {tab === "menu" && <MenuTab menus={menus} onSave={saveMenus} />}
         {tab === "summary" && (
-          <SummaryTab menus={menus} sales={sales} expenses={expenses} />
+          <SummaryTab menus={menus} sales={sales} expenses={expenses} samples={samples} />
         )}
       </div>
 
@@ -596,20 +694,32 @@ function RecordTab({
   setSelectedDate,
   dayLines,
   dayExpenseLines,
+  daySampleLines,
   dayRevenue,
   dayCOGS,
   dayExpenseTotal,
+  daySampleCost,
   dayProfit,
   dayCupsSold,
+  daySampleCups,
   onAddSale,
   onRemoveSaleLine,
   onAddExpense,
   onRemoveExpense,
+  onAddSample,
+  onRemoveSampleLine,
 }) {
   const [showExpenseForm, setShowExpenseForm] = useState(false);
 
   const qtyFor = (menuId, variantId) => {
     const line = dayLines.find(
+      (l) => l.menuId === menuId && l.variantId === variantId
+    );
+    return line ? line.qty : 0;
+  };
+
+  const sampleQtyFor = (menuId, variantId) => {
+    const line = daySampleLines.find(
       (l) => l.menuId === menuId && l.variantId === variantId
     );
     return line ? line.qty : 0;
@@ -632,6 +742,7 @@ function RecordTab({
         revenue={dayRevenue}
         cogs={dayCOGS}
         expenses={dayExpenseTotal}
+        sampleCost={daySampleCost}
         profit={dayProfit}
         cups={dayCupsSold}
       />
@@ -800,11 +911,112 @@ function RecordTab({
           />
         )}
       </div>
+
+      <div className="mt-6">
+        <h3 className="font-display font-semibold text-base mb-3">
+          แจกชิมวันนี้ · {daySampleCups} แก้ว
+        </h3>
+        <div className="space-y-3">
+          {menus.map((menu) => (
+            <div
+              key={menu.id}
+              className="bg-white/60 rounded-2xl p-3 border border-[#3D2B1F]/8"
+            >
+              <div className="font-medium text-sm mb-2">{menu.name}</div>
+              <div className="flex flex-wrap gap-2">
+                {menu.variants.map((v) => {
+                  const qty = sampleQtyFor(menu.id, v.id);
+                  return (
+                    <div
+                      key={v.id}
+                      className={`flex items-center rounded-xl border transition-colors ${
+                        qty > 0
+                          ? "border-[#7A8B5C] bg-[#7A8B5C]/10"
+                          : "border-[#3D2B1F]/15 bg-white"
+                      }`}
+                    >
+                      <button
+                        onClick={() =>
+                          onAddSample(
+                            {
+                              menuId: menu.id,
+                              variantId: v.id,
+                              menuName: menu.name,
+                              variantLabel: v.label,
+                              cost: v.cost,
+                            },
+                            -1
+                          )
+                        }
+                        disabled={qty === 0}
+                        className="w-8 h-9 flex items-center justify-center disabled:opacity-20 active:scale-90 transition-transform"
+                      >
+                        <Minus className="w-3.5 h-3.5" />
+                      </button>
+                      <div className="px-1 min-w-[3.2rem] text-center">
+                        <div className="text-xs leading-tight">{v.label}</div>
+                        <div className="font-mono text-sm font-semibold leading-tight">
+                          {qty}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() =>
+                          onAddSample(
+                            {
+                              menuId: menu.id,
+                              variantId: v.id,
+                              menuName: menu.name,
+                              variantLabel: v.label,
+                              cost: v.cost,
+                            },
+                            1
+                          )
+                        }
+                        className="w-8 h-9 flex items-center justify-center active:scale-90 transition-transform text-[#7A8B5C]"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {daySampleLines.length > 0 && (
+          <div className="bg-white/60 rounded-2xl border border-[#3D2B1F]/8 divide-y divide-[#3D2B1F]/8 mt-3">
+            {daySampleLines.map((l) => (
+              <div
+                key={l.id}
+                className="flex items-center justify-between px-4 py-2.5"
+              >
+                <div className="text-sm">
+                  <span className="font-medium">{l.menuName}</span>
+                  <span className="text-[#3D2B1F]/50"> · {l.variantLabel}</span>
+                  <span className="text-[#3D2B1F]/50"> ×{l.qty}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="font-mono text-sm text-[#7A8B5C]">
+                    ทุน ฿{fmtBaht(l.cost * l.qty)}
+                  </span>
+                  <button
+                    onClick={() => onRemoveSampleLine(l.id)}
+                    className="text-[#A6443A]/60 active:scale-90 transition-transform"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
-function ReceiptSummary({ revenue, cogs, expenses, profit, cups }) {
+function ReceiptSummary({ revenue, cogs, expenses, sampleCost, profit, cups }) {
   const isProfit = profit >= 0;
   return (
     <div className="bg-[#3D2B1F] text-[#F7F1E8] rounded-2xl p-5 relative overflow-hidden">
@@ -823,6 +1035,7 @@ function ReceiptSummary({ revenue, cogs, expenses, profit, cups }) {
         <Row label="ยอดขาย" value={revenue} />
         <Row label="ต้นทุนวัตถุดิบ" value={-cogs} muted />
         <Row label="ค่าใช้จ่ายอื่น" value={-expenses} muted />
+        <Row label="ต้นทุนแจกชิม" value={-sampleCost} muted />
       </div>
       <div className="border-t border-dashed border-[#E8DCC8]/30 my-3" />
       <div className="flex items-center justify-between">
@@ -1170,13 +1383,17 @@ function MenuEditor({ initial, onCancel, onSave }) {
 
 // ---------- summary tab ----------
 
-function SummaryTab({ menus, sales, expenses }) {
+function SummaryTab({ menus, sales, expenses, samples }) {
   const [range, setRange] = useState("7");
 
   const allDates = useMemo(() => {
-    const set = new Set([...Object.keys(sales), ...Object.keys(expenses)]);
+    const set = new Set([
+      ...Object.keys(sales),
+      ...Object.keys(expenses),
+      ...Object.keys(samples),
+    ]);
     return Array.from(set).sort();
-  }, [sales, expenses]);
+  }, [sales, expenses, samples]);
 
   const filteredDates = useMemo(() => {
     if (allDates.length === 0) return [];
@@ -1195,13 +1412,15 @@ function SummaryTab({ menus, sales, expenses }) {
     return filteredDates.map((date) => {
       const lines = sales[date] || [];
       const exLines = expenses[date] || [];
+      const sampleLines = samples[date] || [];
       const revenue = lines.reduce((s, l) => s + l.price * l.qty, 0);
       const cogs = lines.reduce((s, l) => s + l.cost * l.qty, 0);
       const exTotal = exLines.reduce((s, e) => s + e.amount, 0);
-      const profit = revenue - cogs - exTotal;
-      return { date, revenue, cogs, exTotal, profit };
+      const sampleCost = sampleLines.reduce((s, l) => s + l.cost * l.qty, 0);
+      const profit = revenue - cogs - exTotal - sampleCost;
+      return { date, revenue, cogs, exTotal, sampleCost, profit };
     });
-  }, [filteredDates, sales, expenses]);
+  }, [filteredDates, sales, expenses, samples]);
 
   const totals = useMemo(() => {
     return dailyStats.reduce(
@@ -1209,9 +1428,10 @@ function SummaryTab({ menus, sales, expenses }) {
         revenue: acc.revenue + d.revenue,
         cogs: acc.cogs + d.cogs,
         exTotal: acc.exTotal + d.exTotal,
+        sampleCost: acc.sampleCost + d.sampleCost,
         profit: acc.profit + d.profit,
       }),
-      { revenue: 0, cogs: 0, exTotal: 0, profit: 0 }
+      { revenue: 0, cogs: 0, exTotal: 0, sampleCost: 0, profit: 0 }
     );
   }, [dailyStats]);
 
@@ -1284,6 +1504,7 @@ function SummaryTab({ menus, sales, expenses }) {
               <Stat label="ยอดขาย" value={totals.revenue} />
               <Stat label="ต้นทุนวัตถุดิบ" value={totals.cogs} />
               <Stat label="ค่าใช้จ่ายอื่น" value={totals.exTotal} />
+              <Stat label="ต้นทุนแจกชิม" value={totals.sampleCost} />
               <Stat
                 label={totals.profit >= 0 ? "กำไรสุทธิ" : "ขาดทุนสุทธิ"}
                 value={Math.abs(totals.profit)}
