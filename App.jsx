@@ -476,20 +476,37 @@ export default function App() {
         await supabase.from("menu_variants").insert(variantRows);
         await reloadAll();
       } else {
-        await supabase
+        const { error: updateErr } = await supabase
           .from("menus")
           .update({ name: menu.name })
           .eq("id", menu.id);
+        if (updateErr) {
+          console.error("menu update failed", updateErr);
+          return;
+        }
 
-        // Simplest robust approach: delete old variants, insert new ones
-        await supabase.from("menu_variants").delete().eq("menu_id", menu.id);
+        const { error: deleteErr } = await supabase
+          .from("menu_variants")
+          .delete()
+          .eq("menu_id", menu.id);
+        if (deleteErr) {
+          console.error("variant delete failed", deleteErr);
+          return;
+        }
+
         const variantRows = menu.variants.map((v) => ({
           menu_id: menu.id,
           label: v.label,
           price: v.price,
           cost: v.cost,
         }));
-        await supabase.from("menu_variants").insert(variantRows);
+        const { error: insertErr } = await supabase
+          .from("menu_variants")
+          .insert(variantRows);
+        if (insertErr) {
+          console.error("variant insert failed", insertErr);
+          return;
+        }
         await reloadAll();
       }
     }
