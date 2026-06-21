@@ -26,6 +26,230 @@ import {
 } from "recharts";
 import { supabase } from "./supabaseClient";
 
+// ---------- i18n ----------
+
+const LANGS = ["th", "zh", "en"];
+
+const TRANSLATIONS = {
+  th: {
+    appName: "ร้านบันทึก",
+    saving: "บันทึก...",
+    saved: "บันทึกแล้ว",
+    navRecord: "บันทึกขาย",
+    navMenu: "เมนู",
+    navSummary: "สรุปผล",
+    prevDay: "วันก่อนหน้า",
+    nextDay: "วันถัดไป",
+    today: "วันนี้",
+    changeDate: "เปลี่ยนวัน",
+    emptyMenuTitle: "ยังไม่มีเมนู",
+    emptyMenuRecordSubtitle: "ไปที่แท็บ “เมนู” เพื่อเพิ่มเมนูและต้นทุนก่อน",
+    tapToAddSales: "แตะเพิ่มยอดขาย",
+    todaysSalesList: "รายการขายวันนี้",
+    todaysExpenses: "ค่าใช้จ่ายวันนี้",
+    add: "เพิ่ม",
+    noExpensesYet: "ยังไม่มีค่าใช้จ่ายบันทึกไว้วันนี้",
+    amountBaht: "จำนวนเงิน (บาท)",
+    noteOptional: "โน้ตเพิ่มเติม (ไม่บังคับ)",
+    cancel: "ยกเลิก",
+    save: "บันทึก",
+    todaysSummary: "สรุปยอดวันนี้",
+    cups: "แก้ว",
+    revenue: "ยอดขาย",
+    rawMaterialCost: "ต้นทุนวัตถุดิบ",
+    otherExpenses: "ค่าใช้จ่ายอื่น",
+    sampleCost: "ต้นทุนแจกชิม",
+    netProfit: "กำไรสุทธิ",
+    netLoss: "ขาดทุนสุทธิ",
+    todaysSamples: "แจกชิมวันนี้",
+    todaysSamplesList: "รายการแจกชิมวันนี้",
+    menuAndCost: "เมนู & ต้นทุน",
+    addMenu: "เพิ่มเมนู",
+    emptyMenuSubtitle: "เริ่มเพิ่มเมนูแรกของร้านได้เลย",
+    edit: "แก้ไข",
+    sellPrice: "ขาย",
+    cost: "ทุน",
+    profitPerCup: "กำไร/แก้ว",
+    belowCostWarning: "มีตัวเลือกที่ขายต่ำกว่าทุน",
+    editMenuTitle: "แก้ไขเมนู",
+    addMenuTitle: "เพิ่มเมนูใหม่",
+    menuName: "ชื่อเมนู",
+    menuNamePlaceholder: "เช่น ลาเต้, ชาไทย",
+    variantsLabel: "ขนาด / ตัวเลือก (แต่ละแบบมีราคาขาย-ต้นทุนของตัวเอง)",
+    variantPlaceholder: "ขนาด เช่น เล็ก/ร้อน",
+    pricePlaceholder: "ราคาขาย",
+    costPlaceholder: "ต้นทุน",
+    addVariant: "เพิ่มขนาด/ตัวเลือก",
+    saveMenu: "บันทึกเมนู",
+    summary: "สรุปผล",
+    range7: "7 วัน",
+    range30: "30 วัน",
+    rangeMonth: "เดือนนี้",
+    emptyDataTitle: "ยังไม่มีข้อมูล",
+    emptyDataSubtitle: "เริ่มบันทึกยอดขายในแท็บ “บันทึกขาย” ก่อน แล้วค่อยกลับมาดูสรุป",
+    total: "รวม",
+    days: "วัน",
+    profitTrend: "แนวโน้มกำไรรายวัน",
+    profit: "กำไร",
+    bestWorstSelling: "เมนูขายดี — ขายไม่ดี",
+    bestSelling: "ขายดีสุด",
+    worstSelling: "ขายน้อยสุด",
+    expenseTypeRent: "ค่าเช่า",
+    expenseTypeLabor: "ค่าแรง",
+    expenseTypeElectric: "ค่าไฟ",
+    expenseTypeWater: "ค่าน้ำ",
+    expenseTypeOther: "อื่นๆ",
+  },
+  zh: {
+    appName: "店铺记录",
+    saving: "保存中...",
+    saved: "已保存",
+    navRecord: "记录销售",
+    navMenu: "菜单",
+    navSummary: "汇总报告",
+    prevDay: "前一天",
+    nextDay: "后一天",
+    today: "今天",
+    changeDate: "更改日期",
+    emptyMenuTitle: "还没有菜单",
+    emptyMenuRecordSubtitle: "请先到“菜单”标签添加菜单和成本",
+    tapToAddSales: "点击记录销售",
+    todaysSalesList: "今日销售记录",
+    todaysExpenses: "今日支出",
+    add: "添加",
+    noExpensesYet: "今天还没有记录支出",
+    amountBaht: "金额（泰铢）",
+    noteOptional: "备注（可选）",
+    cancel: "取消",
+    save: "保存",
+    todaysSummary: "今日汇总",
+    cups: "杯",
+    revenue: "销售额",
+    rawMaterialCost: "原料成本",
+    otherExpenses: "其他支出",
+    sampleCost: "试饮成本",
+    netProfit: "净利润",
+    netLoss: "净亏损",
+    todaysSamples: "今日试饮",
+    todaysSamplesList: "今日试饮记录",
+    menuAndCost: "菜单与成本",
+    addMenu: "添加菜单",
+    emptyMenuSubtitle: "开始添加店铺的第一个菜单吧",
+    edit: "编辑",
+    sellPrice: "售价",
+    cost: "成本",
+    profitPerCup: "每杯利润",
+    belowCostWarning: "有选项的售价低于成本",
+    editMenuTitle: "编辑菜单",
+    addMenuTitle: "添加新菜单",
+    menuName: "菜单名称",
+    menuNamePlaceholder: "例如：拿铁、泰式奶茶",
+    variantsLabel: "规格/选项（每种规格有自己的售价和成本）",
+    variantPlaceholder: "规格，例如：小杯/热饮",
+    pricePlaceholder: "售价",
+    costPlaceholder: "成本",
+    addVariant: "添加规格/选项",
+    saveMenu: "保存菜单",
+    summary: "汇总报告",
+    range7: "7天",
+    range30: "30天",
+    rangeMonth: "本月",
+    emptyDataTitle: "还没有数据",
+    emptyDataSubtitle: "请先在“记录销售”标签开始记录，再回来查看汇总",
+    total: "共",
+    days: "天",
+    profitTrend: "每日利润趋势",
+    profit: "利润",
+    bestWorstSelling: "热销与滞销菜单",
+    bestSelling: "最畅销",
+    worstSelling: "最滞销",
+    expenseTypeRent: "租金",
+    expenseTypeLabor: "人工",
+    expenseTypeElectric: "电费",
+    expenseTypeWater: "水费",
+    expenseTypeOther: "其他",
+  },
+  en: {
+    appName: "Shop Tracker",
+    saving: "Saving...",
+    saved: "Saved",
+    navRecord: "Record Sales",
+    navMenu: "Menu",
+    navSummary: "Summary",
+    prevDay: "Previous day",
+    nextDay: "Next day",
+    today: "Today",
+    changeDate: "Change date",
+    emptyMenuTitle: "No menu yet",
+    emptyMenuRecordSubtitle: "Go to the \"Menu\" tab to add menu items and costs first",
+    tapToAddSales: "Tap to record a sale",
+    todaysSalesList: "Today's Sales",
+    todaysExpenses: "Today's Expenses",
+    add: "Add",
+    noExpensesYet: "No expenses recorded today yet",
+    amountBaht: "Amount (THB)",
+    noteOptional: "Note (optional)",
+    cancel: "Cancel",
+    save: "Save",
+    todaysSummary: "Today's Summary",
+    cups: "cups",
+    revenue: "Revenue",
+    rawMaterialCost: "Raw Material Cost",
+    otherExpenses: "Other Expenses",
+    sampleCost: "Sample Cost",
+    netProfit: "Net Profit",
+    netLoss: "Net Loss",
+    todaysSamples: "Today's Samples",
+    todaysSamplesList: "Today's Sample List",
+    menuAndCost: "Menu & Cost",
+    addMenu: "Add Menu",
+    emptyMenuSubtitle: "Start by adding your shop's first menu item",
+    edit: "Edit",
+    sellPrice: "Sell",
+    cost: "Cost",
+    profitPerCup: "Profit/Cup",
+    belowCostWarning: "Some options are priced below cost",
+    editMenuTitle: "Edit Menu",
+    addMenuTitle: "Add New Menu",
+    menuName: "Menu Name",
+    menuNamePlaceholder: "e.g. Latte, Thai Tea",
+    variantsLabel: "Sizes / Options (each has its own price and cost)",
+    variantPlaceholder: "Size, e.g. Small/Hot",
+    pricePlaceholder: "Sell Price",
+    costPlaceholder: "Cost",
+    addVariant: "Add Size/Option",
+    saveMenu: "Save Menu",
+    summary: "Summary",
+    range7: "7 days",
+    range30: "30 days",
+    rangeMonth: "This month",
+    emptyDataTitle: "No data yet",
+    emptyDataSubtitle: "Start recording sales in the \"Record Sales\" tab first, then come back to see the summary",
+    total: "Total",
+    days: "days",
+    profitTrend: "Daily Profit Trend",
+    profit: "Profit",
+    bestWorstSelling: "Best & Worst Selling",
+    bestSelling: "Best seller",
+    worstSelling: "Worst seller",
+    expenseTypeRent: "Rent",
+    expenseTypeLabor: "Labor",
+    expenseTypeElectric: "Electricity",
+    expenseTypeWater: "Water",
+    expenseTypeOther: "Other",
+  },
+};
+
+function useTranslation(lang) {
+  return (key) => TRANSLATIONS[lang]?.[key] ?? TRANSLATIONS.th[key] ?? key;
+}
+
+const DAY_NAMES = {
+  th: ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"],
+  zh: ["周日", "周一", "周二", "周三", "周四", "周五", "周六"],
+  en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+};
+
 // ---------- helpers ----------
 
 const uid = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -46,13 +270,19 @@ const fmtBaht = (n) =>
     maximumFractionDigits: 2,
   }).format(n);
 
-const dayLabel = (dateStr) => {
+const dayLabel = (dateStr, lang = "th") => {
   const d = new Date(dateStr + "T00:00:00");
-  const days = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
+  const days = DAY_NAMES[lang] || DAY_NAMES.th;
   return `${days[d.getDay()]} ${d.getDate()}/${d.getMonth() + 1}`;
 };
 
-const EXPENSE_TYPES = ["ค่าเช่า", "ค่าแรง", "ค่าไฟ", "ค่าน้ำ", "อื่นๆ"];
+const EXPENSE_TYPE_KEYS = [
+  "expenseTypeRent",
+  "expenseTypeLabor",
+  "expenseTypeElectric",
+  "expenseTypeWater",
+  "expenseTypeOther",
+];
 
 const STARTER_MENUS = [
   {
@@ -229,6 +459,8 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [saveState, setSaveState] = useState("idle");
   const [configError, setConfigError] = useState(false);
+  const [lang, setLang] = useState("th");
+  const t = useTranslation(lang);
 
   const [menus, setMenus] = useState([]);
   const [sales, setSales] = useState({});
@@ -553,7 +785,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#F7F1E8] text-[#3D2B1F] font-sans flex flex-col">
-      <Header saveState={saveState} />
+      <Header saveState={saveState} t={t} lang={lang} setLang={setLang} />
 
       <div className="flex-1 max-w-2xl w-full mx-auto px-4 pb-28 pt-4">
         {tab === "record" && (
@@ -577,22 +809,32 @@ export default function App() {
             onRemoveExpense={removeExpense}
             onAddSample={addSample}
             onRemoveSampleLine={removeSampleLine}
+            t={t}
+            lang={lang}
           />
         )}
-        {tab === "menu" && <MenuTab menus={menus} onSave={saveMenus} />}
+        {tab === "menu" && <MenuTab menus={menus} onSave={saveMenus} t={t} />}
         {tab === "summary" && (
-          <SummaryTab menus={menus} sales={sales} expenses={expenses} samples={samples} />
+          <SummaryTab
+            menus={menus}
+            sales={sales}
+            expenses={expenses}
+            samples={samples}
+            t={t}
+            lang={lang}
+          />
         )}
       </div>
 
-      <BottomNav tab={tab} setTab={setTab} />
+      <BottomNav tab={tab} setTab={setTab} t={t} />
     </div>
   );
 }
 
 // ---------- header ----------
 
-function Header({ saveState }) {
+function Header({ saveState, t, lang, setLang }) {
+  const LANG_LABELS = { th: "ไทย", zh: "中文", en: "EN" };
   return (
     <div className="sticky top-0 z-20 bg-[#F7F1E8]/95 backdrop-blur-sm border-b border-[#3D2B1F]/10">
       <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -601,18 +843,35 @@ function Header({ saveState }) {
             <Coffee className="w-4 h-4 text-[#F7F1E8]" />
           </div>
           <span className="font-display font-semibold text-lg tracking-tight">
-            ร้านบันทึก
+            {t("appName")}
           </span>
         </div>
-        <div className="h-5 flex items-center">
-          {saveState === "saving" && (
-            <span className="text-xs text-[#3D2B1F]/40 font-mono">บันทึก...</span>
-          )}
-          {saveState === "saved" && (
-            <span className="text-xs text-[#7A8B5C] font-mono flex items-center gap-1">
-              <Check className="w-3 h-3" /> บันทึกแล้ว
-            </span>
-          )}
+        <div className="flex items-center gap-3">
+          <div className="h-5 flex items-center">
+            {saveState === "saving" && (
+              <span className="text-xs text-[#3D2B1F]/40 font-mono">{t("saving")}</span>
+            )}
+            {saveState === "saved" && (
+              <span className="text-xs text-[#7A8B5C] font-mono flex items-center gap-1">
+                <Check className="w-3 h-3" /> {t("saved")}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center bg-[#E8DCC8] rounded-full p-0.5">
+            {LANGS.map((code) => (
+              <button
+                key={code}
+                onClick={() => setLang(code)}
+                className={`text-[11px] font-medium px-2 py-1 rounded-full transition-colors ${
+                  lang === code
+                    ? "bg-[#3D2B1F] text-[#F7F1E8]"
+                    : "text-[#3D2B1F]/60"
+                }`}
+              >
+                {LANG_LABELS[code]}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -621,11 +880,11 @@ function Header({ saveState }) {
 
 // ---------- bottom nav ----------
 
-function BottomNav({ tab, setTab }) {
+function BottomNav({ tab, setTab, t }) {
   const items = [
-    { id: "record", label: "บันทึกขาย", icon: Receipt },
-    { id: "menu", label: "เมนู", icon: ListOrdered },
-    { id: "summary", label: "สรุปผล", icon: TrendingUp },
+    { id: "record", labelKey: "navRecord", icon: Receipt },
+    { id: "menu", labelKey: "navMenu", icon: ListOrdered },
+    { id: "summary", labelKey: "navSummary", icon: TrendingUp },
   ];
   return (
     <div className="fixed bottom-0 left-0 right-0 z-20 bg-[#3D2B1F] border-t border-black/20">
@@ -642,7 +901,7 @@ function BottomNav({ tab, setTab }) {
               }`}
             >
               <Icon className="w-5 h-5" strokeWidth={active ? 2.5 : 2} />
-              <span className="text-[11px] font-medium">{it.label}</span>
+              <span className="text-[11px] font-medium">{t(it.labelKey)}</span>
             </button>
           );
         })}
@@ -653,7 +912,7 @@ function BottomNav({ tab, setTab }) {
 
 // ---------- date picker chip ----------
 
-function DateBar({ selectedDate, setSelectedDate }) {
+function DateBar({ selectedDate, setSelectedDate, t, lang }) {
   const isToday = selectedDate === todayStr();
   const shift = (delta) => {
     const d = new Date(selectedDate + "T00:00:00");
@@ -669,14 +928,14 @@ function DateBar({ selectedDate, setSelectedDate }) {
       <button
         onClick={() => shift(-1)}
         className="w-8 h-8 rounded-full bg-[#E8DCC8] flex items-center justify-center active:scale-95 transition-transform"
-        aria-label="วันก่อนหน้า"
+        aria-label={t("prevDay")}
       >
         <ChevronRight className="w-4 h-4 rotate-180" />
       </button>
       <div className="flex items-center gap-2">
         <Calendar className="w-4 h-4 text-[#B8763E]" />
         <span className="font-mono font-medium text-sm">
-          {dayLabel(selectedDate)} {isToday && "· วันนี้"}
+          {dayLabel(selectedDate, lang)} {isToday && `· ${t("today")}`}
         </span>
         <input
           type="date"
@@ -689,13 +948,13 @@ function DateBar({ selectedDate, setSelectedDate }) {
           htmlFor="date-hidden-input"
           className="text-[11px] text-[#B8763E] underline cursor-pointer"
         >
-          เปลี่ยนวัน
+          {t("changeDate")}
         </label>
       </div>
       <button
         onClick={() => shift(1)}
         className="w-8 h-8 rounded-full bg-[#E8DCC8] flex items-center justify-center active:scale-95 transition-transform"
-        aria-label="วันถัดไป"
+        aria-label={t("nextDay")}
       >
         <ChevronRight className="w-4 h-4" />
       </button>
@@ -725,6 +984,8 @@ function RecordTab({
   onRemoveExpense,
   onAddSample,
   onRemoveSampleLine,
+  t,
+  lang,
 }) {
   const [showExpenseForm, setShowExpenseForm] = useState(false);
 
@@ -745,15 +1006,20 @@ function RecordTab({
   if (menus.length === 0) {
     return (
       <EmptyState
-        title="ยังไม่มีเมนู"
-        subtitle="ไปที่แท็บ “เมนู” เพื่อเพิ่มเมนูและต้นทุนก่อน"
+        title={t("emptyMenuTitle")}
+        subtitle={t("emptyMenuRecordSubtitle")}
       />
     );
   }
 
   return (
     <div>
-      <DateBar selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
+      <DateBar
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
+        t={t}
+        lang={lang}
+      />
 
       <ReceiptSummary
         revenue={dayRevenue}
@@ -762,11 +1028,12 @@ function RecordTab({
         sampleCost={daySampleCost}
         profit={dayProfit}
         cups={dayCupsSold}
+        t={t}
       />
 
       <div className="mt-6">
         <h3 className="font-display font-semibold text-base mb-3">
-          แตะเพิ่มยอดขาย
+          {t("tapToAddSales")}
         </h3>
         <div className="space-y-3">
           {menus.map((menu) => (
@@ -842,7 +1109,7 @@ function RecordTab({
       {dayLines.length > 0 && (
         <div className="mt-6">
           <h3 className="font-display font-semibold text-base mb-3">
-            รายการขายวันนี้
+            {t("todaysSalesList")}
           </h3>
           <div className="bg-white/60 rounded-2xl border border-[#3D2B1F]/8 divide-y divide-[#3D2B1F]/8">
             {dayLines.map((l) => (
@@ -875,19 +1142,19 @@ function RecordTab({
       <div className="mt-6">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-display font-semibold text-base">
-            ค่าใช้จ่ายวันนี้
+            {t("todaysExpenses")}
           </h3>
           <button
             onClick={() => setShowExpenseForm(true)}
             className="text-xs font-medium text-[#B8763E] flex items-center gap-1"
           >
-            <Plus className="w-3.5 h-3.5" /> เพิ่ม
+            <Plus className="w-3.5 h-3.5" /> {t("add")}
           </button>
         </div>
 
         {dayExpenseLines.length === 0 && !showExpenseForm && (
           <p className="text-sm text-[#3D2B1F]/40">
-            ยังไม่มีค่าใช้จ่ายบันทึกไว้วันนี้
+            {t("noExpensesYet")}
           </p>
         )}
 
@@ -925,13 +1192,14 @@ function RecordTab({
               onAddExpense(entry);
               setShowExpenseForm(false);
             }}
+            t={t}
           />
         )}
       </div>
 
       <div className="mt-6">
         <h3 className="font-display font-semibold text-base mb-3">
-          แจกชิมวันนี้ · {daySampleCups} แก้ว
+          {t("todaysSamples")} · {daySampleCups} {t("cups")}
         </h3>
         <div className="space-y-3">
           {menus.map((menu) => (
@@ -1033,7 +1301,7 @@ function RecordTab({
   );
 }
 
-function ReceiptSummary({ revenue, cogs, expenses, sampleCost, profit, cups }) {
+function ReceiptSummary({ revenue, cogs, expenses, sampleCost, profit, cups, t }) {
   const isProfit = profit >= 0;
   return (
     <div className="bg-[#3D2B1F] text-[#F7F1E8] rounded-2xl p-5 relative overflow-hidden">
@@ -1046,18 +1314,18 @@ function ReceiptSummary({ revenue, cogs, expenses, sampleCost, profit, cups }) {
         }}
       />
       <div className="font-mono text-[11px] uppercase tracking-widest text-[#E8DCC8]/60 mb-3">
-        สรุปยอดวันนี้ · {cups} แก้ว
+        {t("todaysSummary")} · {cups} {t("cups")}
       </div>
       <div className="space-y-1.5 font-mono text-sm">
-        <Row label="ยอดขาย" value={revenue} />
-        <Row label="ต้นทุนวัตถุดิบ" value={-cogs} muted />
-        <Row label="ค่าใช้จ่ายอื่น" value={-expenses} muted />
-        <Row label="ต้นทุนแจกชิม" value={-sampleCost} muted />
+        <Row label={t("revenue")} value={revenue} />
+        <Row label={t("rawMaterialCost")} value={-cogs} muted />
+        <Row label={t("otherExpenses")} value={-expenses} muted />
+        <Row label={t("sampleCost")} value={-sampleCost} muted />
       </div>
       <div className="border-t border-dashed border-[#E8DCC8]/30 my-3" />
       <div className="flex items-center justify-between">
         <span className="font-display font-semibold">
-          {isProfit ? "กำไรสุทธิ" : "ขาดทุนสุทธิ"}
+          {isProfit ? t("netProfit") : t("netLoss")}
         </span>
         <span
           className={`font-mono text-xl font-bold flex items-center gap-1 ${
@@ -1088,45 +1356,45 @@ function Row({ label, value, muted }) {
   );
 }
 
-function ExpenseForm({ onCancel, onSubmit }) {
-  const [type, setType] = useState(EXPENSE_TYPES[0]);
+function ExpenseForm({ onCancel, onSubmit, t }) {
+  const [type, setType] = useState(EXPENSE_TYPE_KEYS[0]);
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
 
   const submit = () => {
     const amt = parseFloat(amount);
     if (!amt || amt <= 0) return;
-    onSubmit({ type, amount: amt, note: note.trim() });
+    onSubmit({ type: t(type), amount: amt, note: note.trim() });
   };
 
   return (
     <div className="bg-white rounded-2xl border border-[#3D2B1F]/10 p-4 space-y-3">
       <div className="flex flex-wrap gap-2">
-        {EXPENSE_TYPES.map((t) => (
+        {EXPENSE_TYPE_KEYS.map((expType) => (
           <button
-            key={t}
-            onClick={() => setType(t)}
+            key={expType}
+            onClick={() => setType(expType)}
             className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-              type === t
+              type === expType
                 ? "bg-[#3D2B1F] text-[#F7F1E8] border-[#3D2B1F]"
                 : "border-[#3D2B1F]/20 text-[#3D2B1F]/70"
             }`}
           >
-            {t}
+            {t(expType)}
           </button>
         ))}
       </div>
       <input
         type="number"
         inputMode="decimal"
-        placeholder="จำนวนเงิน (บาท)"
+        placeholder={t("amountBaht")}
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
         className="w-full bg-[#F7F1E8] rounded-xl px-3 py-2.5 text-sm font-mono outline-none focus:ring-2 focus:ring-[#B8763E]"
       />
       <input
         type="text"
-        placeholder="โน้ตเพิ่มเติม (ไม่บังคับ)"
+        placeholder={t("noteOptional")}
         value={note}
         onChange={(e) => setNote(e.target.value)}
         className="w-full bg-[#F7F1E8] rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#B8763E]"
@@ -1136,13 +1404,13 @@ function ExpenseForm({ onCancel, onSubmit }) {
           onClick={onCancel}
           className="flex-1 py-2.5 rounded-xl text-sm font-medium text-[#3D2B1F]/60 border border-[#3D2B1F]/15"
         >
-          ยกเลิก
+          {t("cancel")}
         </button>
         <button
           onClick={submit}
           className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-[#B8763E] text-white"
         >
-          บันทึก
+          {t("save")}
         </button>
       </div>
     </div>
@@ -1151,7 +1419,7 @@ function ExpenseForm({ onCancel, onSubmit }) {
 
 // ---------- menu tab ----------
 
-function MenuTab({ menus, onSave }) {
+function MenuTab({ menus, onSave, t }) {
   const [editingMenu, setEditingMenu] = useState(null);
 
   const deleteMenu = (menu) => {
@@ -1173,6 +1441,7 @@ function MenuTab({ menus, onSave }) {
         initial={editingMenu === "new" ? null : editingMenu}
         onCancel={() => setEditingMenu(null)}
         onSave={(menu) => upsertMenu(menu, editingMenu === "new")}
+        t={t}
       />
     );
   }
@@ -1180,17 +1449,17 @@ function MenuTab({ menus, onSave }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="font-display font-semibold text-xl">เมนู &amp; ต้นทุน</h2>
+        <h2 className="font-display font-semibold text-xl">{t("menuAndCost")}</h2>
         <button
           onClick={() => setEditingMenu("new")}
           className="flex items-center gap-1 bg-[#3D2B1F] text-[#F7F1E8] text-sm font-medium px-3 py-2 rounded-xl active:scale-95 transition-transform"
         >
-          <Plus className="w-4 h-4" /> เพิ่มเมนู
+          <Plus className="w-4 h-4" /> {t("addMenu")}
         </button>
       </div>
 
       {menus.length === 0 && (
-        <EmptyState title="ยังไม่มีเมนู" subtitle="เริ่มเพิ่มเมนูแรกของร้านได้เลย" />
+        <EmptyState title={t("emptyMenuTitle")} subtitle={t("emptyMenuSubtitle")} />
       )}
 
       <div className="space-y-3">
@@ -1212,7 +1481,7 @@ function MenuTab({ menus, onSave }) {
                     onClick={() => setEditingMenu(menu)}
                     className="text-xs text-[#B8763E] font-medium"
                   >
-                    แก้ไข
+                    {t("edit")}
                   </button>
                   <button
                     onClick={() => deleteMenu(menu)}
@@ -1232,16 +1501,16 @@ function MenuTab({ menus, onSave }) {
                     >
                       <span className="font-sans">{v.label}</span>
                       <span className="flex items-center gap-3 text-xs">
-                        <span>ขาย ฿{fmtBaht(v.price)}</span>
+                        <span>{t("sellPrice")} ฿{fmtBaht(v.price)}</span>
                         <span className="text-[#3D2B1F]/50">
-                          ทุน ฿{fmtBaht(v.cost)}
+                          {t("cost")} ฿{fmtBaht(v.cost)}
                         </span>
                         <span
                           className={
                             margin > 0 ? "text-[#7A8B5C]" : "text-[#A6443A]"
                           }
                         >
-                          กำไร/แก้ว ฿{fmtBaht(margin)}
+                          {t("profitPerCup")} ฿{fmtBaht(margin)}
                         </span>
                       </span>
                     </div>
@@ -1250,7 +1519,7 @@ function MenuTab({ menus, onSave }) {
               </div>
               {!marginOk && (
                 <div className="flex items-center gap-1.5 mt-2 text-xs text-[#A6443A]">
-                  <AlertCircle className="w-3.5 h-3.5" /> มีตัวเลือกที่ขายต่ำกว่าทุน
+                  <AlertCircle className="w-3.5 h-3.5" /> {t("belowCostWarning")}
                 </div>
               )}
             </div>
@@ -1261,11 +1530,11 @@ function MenuTab({ menus, onSave }) {
   );
 }
 
-function MenuEditor({ initial, onCancel, onSave }) {
+function MenuEditor({ initial, onCancel, onSave, t }) {
   const [name, setName] = useState(initial?.name || "");
   const [variants, setVariants] = useState(
     initial?.variants?.map((v) => ({ ...v })) || [
-      { id: uid(), label: "ปกติ", price: "", cost: "" },
+      { id: uid(), label: "", price: "", cost: "" },
     ]
   );
 
@@ -1312,7 +1581,7 @@ function MenuEditor({ initial, onCancel, onSave }) {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-display font-semibold text-xl">
-          {initial ? "แก้ไขเมนู" : "เพิ่มเมนูใหม่"}
+          {initial ? t("editMenuTitle") : t("addMenuTitle")}
         </h2>
         <button onClick={onCancel} className="text-[#3D2B1F]/40">
           <X className="w-5 h-5" />
@@ -1320,18 +1589,18 @@ function MenuEditor({ initial, onCancel, onSave }) {
       </div>
 
       <label className="block text-xs font-medium text-[#3D2B1F]/60 mb-1">
-        ชื่อเมนู
+        {t("menuName")}
       </label>
       <input
         type="text"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder="เช่น ลาเต้, ชาไทย"
+        placeholder={t("menuNamePlaceholder")}
         className="w-full bg-white rounded-xl px-3 py-2.5 text-sm mb-4 outline-none focus:ring-2 focus:ring-[#B8763E] border border-[#3D2B1F]/10"
       />
 
       <label className="block text-xs font-medium text-[#3D2B1F]/60 mb-2">
-        ขนาด / ตัวเลือก (แต่ละแบบมีราคาขาย-ต้นทุนของตัวเอง)
+        {t("variantsLabel")}
       </label>
       <div className="space-y-2 mb-3">
         {variants.map((v) => (
@@ -1341,7 +1610,7 @@ function MenuEditor({ initial, onCancel, onSave }) {
           >
             <input
               type="text"
-              placeholder="ขนาด เช่น เล็ก/ร้อน"
+              placeholder={t("variantPlaceholder")}
               value={v.label}
               onChange={(e) => updateVariant(v.id, "label", e.target.value)}
               className="flex-1 min-w-0 text-sm outline-none bg-transparent"
@@ -1349,7 +1618,7 @@ function MenuEditor({ initial, onCancel, onSave }) {
             <input
               type="number"
               inputMode="decimal"
-              placeholder="ราคาขาย"
+              placeholder={t("pricePlaceholder")}
               value={v.price}
               onChange={(e) => updateVariant(v.id, "price", e.target.value)}
               className="w-20 text-sm font-mono outline-none bg-[#F7F1E8] rounded-lg px-2 py-1.5 text-center"
@@ -1357,7 +1626,7 @@ function MenuEditor({ initial, onCancel, onSave }) {
             <input
               type="number"
               inputMode="decimal"
-              placeholder="ต้นทุน"
+              placeholder={t("costPlaceholder")}
               value={v.cost}
               onChange={(e) => updateVariant(v.id, "cost", e.target.value)}
               className="w-20 text-sm font-mono outline-none bg-[#F7F1E8] rounded-lg px-2 py-1.5 text-center"
@@ -1376,7 +1645,7 @@ function MenuEditor({ initial, onCancel, onSave }) {
         onClick={addVariant}
         className="text-sm text-[#B8763E] font-medium flex items-center gap-1 mb-6"
       >
-        <Plus className="w-4 h-4" /> เพิ่มขนาด/ตัวเลือก
+        <Plus className="w-4 h-4" /> {t("addVariant")}
       </button>
 
       <div className="flex gap-2">
@@ -1384,14 +1653,14 @@ function MenuEditor({ initial, onCancel, onSave }) {
           onClick={onCancel}
           className="flex-1 py-3 rounded-xl text-sm font-medium text-[#3D2B1F]/60 border border-[#3D2B1F]/15"
         >
-          ยกเลิก
+          {t("cancel")}
         </button>
         <button
           onClick={handleSave}
           disabled={!canSave}
           className="flex-1 py-3 rounded-xl text-sm font-medium bg-[#3D2B1F] text-[#F7F1E8] disabled:opacity-30"
         >
-          บันทึกเมนู
+          {t("saveMenu")}
         </button>
       </div>
     </div>
@@ -1400,7 +1669,7 @@ function MenuEditor({ initial, onCancel, onSave }) {
 
 // ---------- summary tab ----------
 
-function SummaryTab({ menus, sales, expenses, samples }) {
+function SummaryTab({ menus, sales, expenses, samples, t, lang }) {
   const [range, setRange] = useState("7");
 
   const allDates = useMemo(() => {
@@ -1475,7 +1744,7 @@ function SummaryTab({ menus, sales, expenses, samples }) {
   }, [filteredDates, sales]);
 
   const chartData = dailyStats.map((d) => ({
-    label: dayLabel(d.date),
+    label: dayLabel(d.date, lang),
     profit: Math.round(d.profit),
     revenue: Math.round(d.revenue),
   }));
@@ -1484,13 +1753,13 @@ function SummaryTab({ menus, sales, expenses, samples }) {
 
   return (
     <div>
-      <h2 className="font-display font-semibold text-xl mb-4">สรุปผล</h2>
+      <h2 className="font-display font-semibold text-xl mb-4">{t("summary")}</h2>
 
       <div className="flex gap-2 mb-5">
         {[
-          { id: "7", label: "7 วัน" },
-          { id: "30", label: "30 วัน" },
-          { id: "month", label: "เดือนนี้" },
+          { id: "7", label: t("range7") },
+          { id: "30", label: t("range30") },
+          { id: "month", label: t("rangeMonth") },
         ].map((r) => (
           <button
             key={r.id}
@@ -1508,22 +1777,22 @@ function SummaryTab({ menus, sales, expenses, samples }) {
 
       {isEmpty ? (
         <EmptyState
-          title="ยังไม่มีข้อมูล"
-          subtitle="เริ่มบันทึกยอดขายในแท็บ “บันทึกขาย” ก่อน แล้วค่อยกลับมาดูสรุป"
+          title={t("emptyDataTitle")}
+          subtitle={t("emptyDataSubtitle")}
         />
       ) : (
         <>
           <div className="bg-[#3D2B1F] text-[#F7F1E8] rounded-2xl p-5 mb-5">
             <div className="font-mono text-[11px] uppercase tracking-widest text-[#E8DCC8]/60 mb-3">
-              รวม {filteredDates.length} วัน
+              {t("total")} {filteredDates.length} {t("days")}
             </div>
             <div className="grid grid-cols-2 gap-3 font-mono text-sm">
-              <Stat label="ยอดขาย" value={totals.revenue} />
-              <Stat label="ต้นทุนวัตถุดิบ" value={totals.cogs} />
-              <Stat label="ค่าใช้จ่ายอื่น" value={totals.exTotal} />
-              <Stat label="ต้นทุนแจกชิม" value={totals.sampleCost} />
+              <Stat label={t("revenue")} value={totals.revenue} />
+              <Stat label={t("rawMaterialCost")} value={totals.cogs} />
+              <Stat label={t("otherExpenses")} value={totals.exTotal} />
+              <Stat label={t("sampleCost")} value={totals.sampleCost} />
               <Stat
-                label={totals.profit >= 0 ? "กำไรสุทธิ" : "ขาดทุนสุทธิ"}
+                label={totals.profit >= 0 ? t("netProfit") : t("netLoss")}
                 value={Math.abs(totals.profit)}
                 highlight={totals.profit >= 0 ? "good" : "bad"}
               />
@@ -1532,7 +1801,7 @@ function SummaryTab({ menus, sales, expenses, samples }) {
 
           <div className="bg-white/60 rounded-2xl border border-[#3D2B1F]/8 p-4 mb-5">
             <h3 className="font-display font-semibold text-sm mb-3">
-              แนวโน้มกำไรรายวัน
+              {t("profitTrend")}
             </h3>
             <ResponsiveContainer width="100%" height={180}>
               <LineChart data={chartData} margin={{ left: -20, right: 8 }}>
@@ -1553,7 +1822,7 @@ function SummaryTab({ menus, sales, expenses, samples }) {
                   tickLine={false}
                 />
                 <Tooltip
-                  formatter={(v) => [`฿${fmtBaht(v)}`, "กำไร"]}
+                  formatter={(v) => [`฿${fmtBaht(v)}`, t("profit")]}
                   contentStyle={{
                     fontSize: 12,
                     borderRadius: 8,
@@ -1573,7 +1842,7 @@ function SummaryTab({ menus, sales, expenses, samples }) {
 
           <div className="bg-white/60 rounded-2xl border border-[#3D2B1F]/8 p-4">
             <h3 className="font-display font-semibold text-sm mb-3">
-              เมนูขายดี — ขายไม่ดี
+              {t("bestWorstSelling")}
             </h3>
             <div className="space-y-2">
               {menuRanking.map((m, i) => {
@@ -1588,14 +1857,14 @@ function SummaryTab({ menus, sales, expenses, samples }) {
                       <span className="font-medium">
                         {m.name} · {m.label}
                         {isTop && (
-                          <span className="ml-1.5 text-[#7A8B5C]">ขายดีสุด</span>
+                          <span className="ml-1.5 text-[#7A8B5C]">{t("bestSelling")}</span>
                         )}
                         {isBottom && (
-                          <span className="ml-1.5 text-[#A6443A]">ขายน้อยสุด</span>
+                          <span className="ml-1.5 text-[#A6443A]">{t("worstSelling")}</span>
                         )}
                       </span>
                       <span className="font-mono text-[#3D2B1F]/60">
-                        {m.qty} แก้ว · ฿{fmtBaht(m.revenue)}
+                        {m.qty} {t("cups")} · ฿{fmtBaht(m.revenue)}
                       </span>
                     </div>
                     <div className="h-2 rounded-full bg-[#3D2B1F]/8 overflow-hidden">
