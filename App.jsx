@@ -32,7 +32,7 @@ const LANGS = ["th", "zh", "en"];
 
 const TRANSLATIONS = {
   th: {
-    appName: "ร้านบันทึก",
+    appName: "ชาสยาม",
     saving: "บันทึก...",
     saved: "บันทึกแล้ว",
     navRecord: "บันทึกขาย",
@@ -101,7 +101,7 @@ const TRANSLATIONS = {
     expenseTypeOther: "อื่นๆ",
   },
   zh: {
-    appName: "店铺记录",
+    appName: "暹罗茶",
     saving: "保存中...",
     saved: "已保存",
     navRecord: "记录销售",
@@ -170,7 +170,7 @@ const TRANSLATIONS = {
     expenseTypeOther: "其他",
   },
   en: {
-    appName: "Shop Tracker",
+    appName: "Cha Siam",
     saving: "Saving...",
     saved: "Saved",
     navRecord: "Record Sales",
@@ -683,7 +683,29 @@ export default function App() {
   const saveMenus = async (nextMenus, action, payload) => {
     flashSaved();
     if (action === "delete") {
-      await supabase.from("menus").delete().eq("id", payload.id);
+      const { error: salesErr } = await supabase
+        .from("sales")
+        .delete()
+        .eq("menu_id", payload.id);
+      if (salesErr) {
+        console.error("delete related sales failed", salesErr);
+      }
+      const { error: samplesErr } = await supabase
+        .from("samples")
+        .delete()
+        .eq("menu_id", payload.id);
+      if (samplesErr) {
+        console.error("delete related samples failed", samplesErr);
+      }
+      const { error: menuErr } = await supabase
+        .from("menus")
+        .delete()
+        .eq("id", payload.id);
+      if (menuErr) {
+        console.error("delete menu failed", menuErr);
+        await reloadAll();
+        return;
+      }
       setMenus(nextMenus);
       return;
     }
@@ -705,7 +727,12 @@ export default function App() {
           price: v.price,
           cost: v.cost,
         }));
-        await supabase.from("menu_variants").insert(variantRows);
+        const { error: variantInsertErr } = await supabase
+          .from("menu_variants")
+          .insert(variantRows);
+        if (variantInsertErr) {
+          console.error("variant insert failed (new menu)", variantInsertErr);
+        }
         await reloadAll();
       } else {
         const { error: updateErr } = await supabase
@@ -836,43 +863,52 @@ export default function App() {
 function Header({ saveState, t, lang, setLang }) {
   const LANG_LABELS = { th: "ไทย", zh: "中文", en: "EN" };
   return (
-    <div className="sticky top-0 z-20 bg-[#F7F1E8]/95 backdrop-blur-sm border-b border-[#3D2B1F]/10">
-      <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-[#3D2B1F] flex items-center justify-center">
-            <Coffee className="w-4 h-4 text-[#F7F1E8]" />
+    <div className="relative">
+      <div className="sticky top-0 z-20 bg-[#F7F1E8]/95 backdrop-blur-sm border-b border-[#3D2B1F]/10">
+        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-[#3D2B1F] flex items-center justify-center">
+              <Coffee className="w-4 h-4 text-[#F7F1E8]" />
+            </div>
+            <span className="font-display font-semibold text-lg tracking-tight">
+              {t("appName")}
+            </span>
           </div>
-          <span className="font-display font-semibold text-lg tracking-tight">
-            {t("appName")}
-          </span>
+          <div className="flex items-center gap-3">
+            <div className="h-5 flex items-center">
+              {saveState === "saving" && (
+                <span className="text-xs text-[#3D2B1F]/40 font-mono">{t("saving")}</span>
+              )}
+              {saveState === "saved" && (
+                <span className="text-xs text-[#7A8B5C] font-mono flex items-center gap-1">
+                  <Check className="w-3 h-3" /> {t("saved")}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center bg-[#E8DCC8] rounded-full p-0.5">
+              {LANGS.map((code) => (
+                <button
+                  key={code}
+                  onClick={() => setLang(code)}
+                  className={`text-[11px] font-medium px-2 py-1 rounded-full transition-colors ${
+                    lang === code
+                      ? "bg-[#3D2B1F] text-[#F7F1E8]"
+                      : "text-[#3D2B1F]/60"
+                  }`}
+                >
+                  {LANG_LABELS[code]}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="h-5 flex items-center">
-            {saveState === "saving" && (
-              <span className="text-xs text-[#3D2B1F]/40 font-mono">{t("saving")}</span>
-            )}
-            {saveState === "saved" && (
-              <span className="text-xs text-[#7A8B5C] font-mono flex items-center gap-1">
-                <Check className="w-3 h-3" /> {t("saved")}
-              </span>
-            )}
-          </div>
-          <div className="flex items-center bg-[#E8DCC8] rounded-full p-0.5">
-            {LANGS.map((code) => (
-              <button
-                key={code}
-                onClick={() => setLang(code)}
-                className={`text-[11px] font-medium px-2 py-1 rounded-full transition-colors ${
-                  lang === code
-                    ? "bg-[#3D2B1F] text-[#F7F1E8]"
-                    : "text-[#3D2B1F]/60"
-                }`}
-              >
-                {LANG_LABELS[code]}
-              </button>
-            ))}
-          </div>
-        </div>
+      </div>
+      <div className="w-full h-20 sm:h-28 overflow-hidden">
+        <img
+          src="https://i.imgur.com/DU3ZXEI.jpeg"
+          alt="ชาสยาม"
+          className="w-full h-full object-cover"
+        />
       </div>
     </div>
   );
